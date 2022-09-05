@@ -1,6 +1,8 @@
 package converter
 
+import java.math.BigDecimal
 import java.math.BigInteger
+import java.math.RoundingMode
 
 fun main() {
     var readInputFirst = ""
@@ -16,12 +18,18 @@ loop@   while (readInputFirst != "/exit") {
             numberInBase = readln()
             if (numberInBase == "/back") break
             if (numberInBase == "/exit") break@loop
-            println("Conversion result: ${conv(sourceBase.toInt(), targetBase.toInt(), numberInBase)}")
+            if ("." !in numberInBase) {
+                println("Conversion result: ${conv(sourceBase.toInt(), targetBase.toInt(), numberInBase)}")
+            } else {
+                val numberInBaseAfterDot = numberInBase.substringAfter('.')
+                println("Conversion result: ${convAfterDot(sourceBase.toInt(), targetBase.toInt(), numberInBaseAfterDot)}")
+
+            }
         }
     }
 }
 
-    fun conv(sourceBase: Int, targetBase: Int, numberInBase: String): String {
+fun conv(sourceBase: Int, targetBase: Int, numberInBase: String): String {
         var check = 0
         val alfabith = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         var result = ""
@@ -82,3 +90,39 @@ loop@   while (readInputFirst != "/exit") {
 
         return result.reversed()
     }
+
+fun convAfterDot (sourceBase: Int, targetBase: Int, numberInBase: String) : String {
+    val alfabith = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    var summa = BigDecimal.ZERO
+    var newBase = BigDecimal.ONE.setScale(10)
+
+//сначала преобразовываем в десятиричную сисмету
+    for (i in numberInBase.uppercase()) {
+        if (i in alfabith) {
+            summa += i.digitToInt().toBigDecimal() * (sourceBase.toBigDecimal() / newBase)
+            newBase = newBase * sourceBase.toBigDecimal()
+// выше просто продублировал, нужно будет удалить эти две строчки выше
+
+        } else {
+            summa += i.digitToInt().toBigDecimal().setScale(10) / (sourceBase.toBigDecimal().setScale(10) * newBase)
+            newBase *= sourceBase.toBigDecimal()
+        }
+    }
+
+    var summaAfterDot = ""
+    var temporary = summa.setScale(10)
+    val zero = BigDecimal.ZERO.setScale(10)
+
+    while ((temporary - temporary.toBigInteger().toBigDecimal()) != zero) {
+        temporary = (temporary * targetBase.toBigDecimal()).setScale(10)
+        val integerPart = temporary.toBigInteger()
+        temporary = temporary - integerPart.toBigDecimal()
+        summaAfterDot += integerPart.toString()
+        println(temporary.setScale(10))
+        println(summaAfterDot)
+    }
+//    теперь преобразовываем в целевую систему
+
+
+    return summa.toString()
+}
