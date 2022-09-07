@@ -16,13 +16,17 @@ loop@   while (readInputFirst != "/exit") {
         while (numberInBase != "/back") {
             print("Enter number in base $sourceBase to convert to base $targetBase (To go back type /back) ")
             numberInBase = readln()
+            val numberInBaseAfterDot = numberInBase.substringAfter('.')
+            val numberInBaseBeforeDot = numberInBase.substringBefore('.')
             if (numberInBase == "/back") break
             if (numberInBase == "/exit") break@loop
             if ("." !in numberInBase) {
                 println("Conversion result: ${conv(sourceBase.toInt(), targetBase.toInt(), numberInBase)}")
+            } else if (numberInBase[numberInBase.length-1] =='0' && numberInBase[numberInBase.length-2] =='.') {
+                println("Conversion result: ${conv(sourceBase.toInt(), targetBase.toInt(), numberInBaseBeforeDot)}.00000")
             } else {
-                val numberInBaseAfterDot = numberInBase.substringAfter('.')
-                println("Conversion result: ${convAfterDot(sourceBase.toInt(), targetBase.toInt(), numberInBaseAfterDot)}")
+
+                println("Conversion result: ${conv(sourceBase.toInt(), targetBase.toInt(), numberInBaseBeforeDot)}.${convAfterDot(sourceBase.toInt(), targetBase.toInt(), numberInBaseAfterDot)}")
 
             }
         }
@@ -87,19 +91,20 @@ fun conv(sourceBase: Int, targetBase: Int, numberInBase: String): String {
             }
         }
         if (summa.toInt() != 0) result += summa.toString()
-
+        if (result == "") result = "0"
         return result.reversed()
     }
 
 fun convAfterDot (sourceBase: Int, targetBase: Int, numberInBase: String) : String {
     val alfabith = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    var summa = BigDecimal.ZERO
+    var summa = BigDecimal.ZERO.setScale(10)
     var newBase = BigDecimal.ONE.setScale(10)
+    val ten = BigDecimal.TEN.setScale(10)
 
 //сначала преобразовываем в десятиричную сисмету
     for (i in numberInBase.uppercase()) {
         if (i in alfabith) {
-            summa += i.digitToInt().toBigDecimal() * (sourceBase.toBigDecimal() / newBase)
+            summa += (alfabith.indexOf(i).toBigDecimal().setScale(5) + ten) / (sourceBase.toBigDecimal().setScale(10) * newBase)
             newBase = newBase * sourceBase.toBigDecimal()
 // выше просто продублировал, нужно будет удалить эти две строчки выше
 
@@ -117,12 +122,14 @@ fun convAfterDot (sourceBase: Int, targetBase: Int, numberInBase: String) : Stri
         temporary = (temporary * targetBase.toBigDecimal()).setScale(10)
         val integerPart = temporary.toBigInteger()
         temporary = temporary - integerPart.toBigDecimal()
-        summaAfterDot += integerPart.toString()
-        println(temporary.setScale(10))
-        println(summaAfterDot)
+        if (integerPart >= ten.toBigInteger()) {
+            summaAfterDot += alfabith[integerPart.toInt() - 10]
+        } else summaAfterDot += integerPart.toString()
+        if (summaAfterDot.length == 5) break
     }
-//    теперь преобразовываем в целевую систему
+    while (summaAfterDot.length < 5) {
+        summaAfterDot += "0"
+    }
 
-
-    return summa.toString()
+    return summaAfterDot
 }
